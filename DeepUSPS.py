@@ -212,12 +212,12 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
                                      ))
 
     all_loss=batch_data.all_loss.cpu()
+    all_loss = all_loss.reshape(-1,1)
     # fit a two-component GMM to the loss
     gmm = GaussianMixture(n_components=2,max_iter=10,tol=1e-2,reg_covar=5e-4)
     gmm.fit(all_loss)
     prob = gmm.predict_proba(all_loss)
     prob = prob[:,gmm.means_.argmin()]
-    #input_loss = losses.reshape(-1,1)
 
     if TrainMapsOut:
         assert refined_labels_directory is not None, 'Directory for output of refined Maps needs to be specified'
