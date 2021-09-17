@@ -266,6 +266,7 @@ def train(train_loader, model, optimizer, epoch, doc_directory, args, discretiza
     raw_preds  = torch.zeros((output_shape[0],2,output_shape[1],output_shape[2]))
     gt_targets =  torch.zeros((mva_preds.shape))
     pseudo_targets =  torch.zeros((mva_preds.shape))
+    ds_length = len(train_loader.dataset)
 
     for i, Data in tqdm(enumerate(train_loader)):
         #====================================================================================================================
@@ -275,7 +276,7 @@ def train(train_loader, model, optimizer, epoch, doc_directory, args, discretiza
         # measure data loading time
         data_time.update(time.time() - end)
         #initialize batch data
-        batch_data=BatchData(Data, active=True)
+        batch_data=BatchData(Data, ds_length, active=True)
         #check dimensions of labels
         batch_data.check_dimension()
         #Make GT label and pseudolabels float and normalize to range [0,1]
