@@ -212,6 +212,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
                                      ))
 
     all_loss=batch_data.all_loss.cpu()
+    all_loss = (all_loss-all_loss.min())/(all_loss.max()-all_loss.min())
     all_loss = all_loss.reshape(-1,1)
     # fit a two-component GMM to the loss
     gmm = GaussianMixture(n_components=2,max_iter=10,tol=1e-2,reg_covar=5e-4)
@@ -536,7 +537,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                    discretization_threshold,
                    refined_labels_directory=output_dir_it,
                    iter_size=iter_size_train,
-                   print_freq=6,
+                   print_freq=2,
                    TrainMapsOut=MapsOut,
                    mva_preds=mva_preds,
                    image2indx=image2indx)
@@ -552,7 +553,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                     discretization_threshold,
                     refined_labels_directory=output_dir_it,
                     iter_size=iter_size_train,
-                    print_freq=6,
+                    print_freq=2,
                     TrainMapsOut=MapsOut,
                     mva_preds=mva_preds,
                     image2indx=image2indx)
