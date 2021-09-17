@@ -178,7 +178,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
             #       Compute Loss, Gradient and perform optimizer Step.
             #====================================================================================================================
             #compute the loss (with asymmetries and all) and save to batch_active.loss
-            batch_data.compute_loss(beta=args.beta, i)
+            batch_data.compute_loss(i, beta=args.beta)
             loss = batch_data.loss
 
             #====================================================================================================================
