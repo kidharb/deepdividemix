@@ -133,7 +133,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
     pseudo_targets =  torch.zeros((mva_preds.shape))
 
     ds_length = len(train_loader.dataset)
-    with torch.nograd():
+    with torch.no_grad():
         for i, Data in tqdm(enumerate(train_loader)):
             #====================================================================================================================
             #       Get time, Image Names, Check Sizes
