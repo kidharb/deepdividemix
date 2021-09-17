@@ -132,81 +132,83 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
     gt_targets =  torch.zeros((mva_preds.shape))
     pseudo_targets =  torch.zeros((mva_preds.shape))
 
-    for i, Data in tqdm(enumerate(train_loader)):
-        #====================================================================================================================
-        #       Get time, Image Names, Check Sizes
-        #       Normalize Labels, create variables and put them on cuda
-        #====================================================================================================================
-        # measure data loading time
-        data_time.update(time.time() - end)
-        #initialize batch data
-        batch_data=BatchData(Data, active=True)
-        #check dimensions of labels
-        batch_data.check_dimension()
-        #Make GT label and pseudolabels float and normalize to range [0,1]
-        batch_data.normalize_labels()
-        #Push input to cuda. Create Variables for input and labels.
-        #batch_data.create_vars_on_cuda()
-        batch_data.create_vars_on_cuda()
+    ds_length = len(train_loader.dataset)
+    with torch.nograd():
+        for i, Data in tqdm(enumerate(train_loader)):
+            #====================================================================================================================
+            #       Get time, Image Names, Check Sizes
+            #       Normalize Labels, create variables and put them on cuda
+            #====================================================================================================================
+            # measure data loading time
+            data_time.update(time.time() - end)
+            #initialize batch data
+            batch_data=BatchData(Data, active=True, ds_length)
+            #check dimensions of labels
+            batch_data.check_dimension()
+            #Make GT label and pseudolabels float and normalize to range [0,1]
+            batch_data.normalize_labels()
+            #Push input to cuda. Create Variables for input and labels.
+            #batch_data.create_vars_on_cuda()
+            batch_data.create_vars_on_cuda()
 
-        #====================================================================================================================
-        #       Compute Output, normalize it. Optionally apply DCRF
-        #====================================================================================================================
-        #compute saliency prediction, normalize with softmax. Optionally apply Threshold.
-        batch_data.compute_saliency(model, False)
+            #====================================================================================================================
+            #       Compute Output, normalize it. Optionally apply DCRF
+            #====================================================================================================================
+            #compute saliency prediction, normalize with softmax. Optionally apply Threshold.
+            batch_data.compute_saliency(model, False)
 
-        #====================================================================================================================
-        #       If TrainMapsOut: Save Training Images (Before Optimizer Step!)
-        #====================================================================================================================
-        if TrainMapsOut:
-            m = torch.nn.Softmax(dim=1)
-            sal_pred_raw = m(batch_data.output)
-            gt_targets[image2indx(batch_data.names)] = batch_data.GT_label
-            pseudo_targets[image2indx(batch_data.names)] = batch_data.pseudolabels[0]
-            assert len(batch_data.pseudolabels) == 1, 'Only one map should be refined at a time in order to not lose information'
-            raw_preds[image2indx(batch_data.names)] = sal_pred_raw.detach().cpu()
+            #====================================================================================================================
+            #       If TrainMapsOut: Save Training Images (Before Optimizer Step!)
+            #====================================================================================================================
+            if TrainMapsOut:
+                m = torch.nn.Softmax(dim=1)
+                sal_pred_raw = m(batch_data.output)
+                gt_targets[image2indx(batch_data.names)] = batch_data.GT_label
+                pseudo_targets[image2indx(batch_data.names)] = batch_data.pseudolabels[0]
+                assert len(batch_data.pseudolabels) == 1, 'Only one map should be refined at a time in order to not lose information'
+                raw_preds[image2indx(batch_data.names)] = sal_pred_raw.detach().cpu()
 
-        #====================================================================================================================
-        #       Discretize Targets and apply 'soft thresholding' to saliency predictions.
-        #====================================================================================================================
-        #Discretize all pseudolabels and apply soft thresholing
-        batch_data.discretize_pseudolabels(Disc_Thr)
+            #====================================================================================================================
+            #       Discretize Targets and apply 'soft thresholding' to saliency predictions.
+            #====================================================================================================================
+            #Discretize all pseudolabels and apply soft thresholing
+            batch_data.discretize_pseudolabels(Disc_Thr)
 
-        #=====================================================================================================================
-        #       Compute Loss, Gradient and perform optimizer Step.
-        #====================================================================================================================
-        #compute the loss (with asymmetries and all) and save to batch_active.loss
-        batch_data.compute_loss(beta=args.beta)
-        loss = batch_data.loss
+            #=====================================================================================================================
+            #       Compute Loss, Gradient and perform optimizer Step.
+            #====================================================================================================================
+            #compute the loss (with asymmetries and all) and save to batch_active.loss
+            batch_data.compute_loss(beta=args.beta, i, dataset_length)
+            loss = batch_data.loss
 
-        #====================================================================================================================
-        #       Update Documentation
-        #====================================================================================================================
-        DOC.update(batch_data.sal_pred, batch_data.GT_label_var, batch_data.sal_pred_list, batch_data.pseudolabels_var)
-        #losses is redundant with loss DOC.Loss. Kept for convenience.
-        losses.update(loss.data.item(), batch_data.input.size(0))
+            #====================================================================================================================
+            #       Update Documentation
+            #====================================================================================================================
+            DOC.update(batch_data.sal_pred, batch_data.GT_label_var, batch_data.sal_pred_list, batch_data.pseudolabels_var)
+            #losses is redundant with loss DOC.Loss. Kept for convenience.
+            losses.update(loss.data.item(), batch_data.input.size(0))
 
-        # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
 
-        FreqPrint=len(train_loader)//print_freq
-        if FreqPrint<1:
-            FreqPrint=1
-        if i % (FreqPrint) == 0:
-            logger.info('Epoch: [{0}][{1}/{2}]\t'
-                         'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                         'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                         'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                         'L1 Loss GT {loss_L1_GT.val:.4f} ({loss_L1_GT.avg:.4f})\t'
-                         .format(epoch,
-                                 i,
-                                 len(train_loader),
-                                 batch_time=batch_time,
-                                 data_time=data_time,
-                                 loss=losses,
-                                 loss_L1_GT=DOC.L1_GT,
-                                 ))
+            FreqPrint=len(train_loader)//print_freq
+            if FreqPrint<1:
+                FreqPrint=1
+            if i % (FreqPrint) == 0:
+                logger.info('Epoch: [{0}][{1}/{2}]\t'
+                             'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                             'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                             'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                             'L1 Loss GT {loss_L1_GT.val:.4f} ({loss_L1_GT.avg:.4f})\t'
+                             .format(epoch,
+                                     i,
+                                     len(train_loader),
+                                     batch_time=batch_time,
+                                     data_time=data_time,
+                                     loss=losses,
+                                     loss_L1_GT=DOC.L1_GT,
+                                     ))
 
 
     if TrainMapsOut:

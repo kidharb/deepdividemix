@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-#os.environ['CUDA_VISIBLE_DEVICES'] = '3' 
+#os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 import logging
 import time
@@ -36,10 +36,11 @@ class BatchData():
         - image names
     This is the content of one dataloader.
     """
-    def __init__(self, batch, active=True):
+    def __init__(self, batch, active=True, ds_length):
         assert len(batch)==4
         self.batch = batch
         self.active = active
+        self.all_loss = torch.zeros(ds_length)
         self.initialize()
 
     #initialize self.input, GT_label, pseudolabels, image names
@@ -49,7 +50,7 @@ class BatchData():
         self.pseudolabels = self.batch[2]
         self.names = self.batch[3]
         self.imnames = [(path.split('/')[-1])[:-4] + '.png' for path in self.names]
-        self.size = self.GT_label.shape[2]      
+        self.size = self.GT_label.shape[2]
 
     #check if GT labels and pseudolabels have the same dimensions
     def check_dimension(self):
@@ -104,9 +105,10 @@ class BatchData():
         for dummy_ind in range(len(self.pseudolabels_var)):
             self.pseudolabels_var[dummy_ind]=Discretize(self.pseudolabels_var[dummy_ind], Disc_Thr).float()
 
-    #Compute 
-    def compute_loss(self, beta=1.0):
+    #Compute
+    def compute_loss(self, beta=1.0, index):
         self.loss=0.0
         for dummy_ind in range(len(self.sal_pred_list)):
             self.loss+=F_cont(self.sal_pred_list[dummy_ind], self.pseudolabels_var[dummy_ind], b=beta)
         self.loss/=len(self.sal_pred_list)
+        self.all_loss[index]=self.loss
