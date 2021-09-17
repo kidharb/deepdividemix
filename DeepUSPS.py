@@ -518,7 +518,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
         else:
             print('Eval Train Net1')
             F_beta, GT_loss_L1 = eval_train( train_loader,
-                                model,
+                                model1,
                                 epoch,
                                 output_dir_it,
                                 args,
@@ -532,6 +532,20 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
             assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
 
 
+            print('Eval Train Net2')
+            F_beta, GT_loss_L1 = eval_train( train_loader,
+                                model1,
+                                epoch,
+                                output_dir_it,
+                                args,
+                                discretization_threshold,
+                                refined_labels_directory=output_dir_it,
+                                iter_size=iter_size_train,
+                                print_freq=6,
+                                TrainMapsOut=MapsOut,
+                                mva_preds=mva_preds,
+                                image2indx=image2indx)
+            assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
 
 
 
@@ -871,9 +885,9 @@ def main():
 
 
     if args.cmd == 'train':
-         if os.path.isdir(join(args.root_dir, 'Doc')):
+         '''if os.path.isdir(join(args.root_dir, 'Doc')):
              print("\n\n\n" + "="*100 + "\n\n\t\tWarning! This doc path seems to be used!\n\t\tPress \"c\" to continue and overwrite existing files, \"exit\" to abort.\n\n" + "="*100 + "\n\n\n")
-             pdb.set_trace()
+             pdb.set_trace()'''
          train_unsupervised(args)
 
     elif args.cmd == 'test':
