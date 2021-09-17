@@ -70,6 +70,7 @@ class BatchData():
         self.input_var = torch.autograd.Variable(self.input).cuda()
         self.GT_label_var = torch.autograd.Variable(self.GT_label).cuda()
         self.pseudolabels_var=[]
+        self.all_loss = self.all_loss.cuda()
         for target in self.pseudolabels:
             self.pseudolabels_var.append(torch.autograd.Variable(target).cuda())
         assert len(self.pseudolabels)==len(self.pseudolabels_var)
@@ -111,4 +112,5 @@ class BatchData():
         for dummy_ind in range(len(self.sal_pred_list)):
             self.loss+=F_cont(self.sal_pred_list[dummy_ind], self.pseudolabels_var[dummy_ind], mean, b=beta)
         self.loss/=len(self.sal_pred_list)
-        self.all_loss[index]=self.loss
+        if not mean:
+            self.all_loss[index]=self.loss
