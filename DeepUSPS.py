@@ -265,12 +265,26 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
         f.write("{}:\t\t{}\n".format(k, v))
     f.close()
 
+    single_model1 = DRNSeg(args.arch, 2, None, pretrained=True)
+    single_model2 = DRNSeg(args.arch, 2, None, pretrained=True)
 
     #load pretrained model for layers that match in size.
     if args.pretrained:
         print('\n')
         load_dict=torch.load(args.pretrained)
-        own_dict=single_model.state_dict()
+        own_dict=single_model1.state_dict()
+        for name, param in load_dict.items():
+            if name not in own_dict:
+                warnings.warn(' Model could not be loaded ! Thats bad ! ')
+                continue
+            if own_dict[name].size() != load_dict[name].size():
+                print('Size of pretrained model and your model does not match in {} ({} vs. {}). Layer stays initialized randomly.'\
+                    .format(name, own_dict[name].size(), load_dict[name].size()))
+            else:
+                own_dict[name].copy_(param)
+        print('\n')
+        load_dict=torch.load(args.pretrained)
+        own_dict=single_model2.state_dict()
         for name, param in load_dict.items():
             if name not in own_dict:
                 warnings.warn(' Model could not be loaded ! Thats bad ! ')
@@ -282,8 +296,6 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                 own_dict[name].copy_(param)
         print('\n')
 
-    single_model1 = DRNSeg(args.arch, 2, None, pretrained=False)
-    single_model2 = DRNSeg(args.arch, 2, None, pretrained=False)
     model1 = torch.nn.DataParallel(single_model1.cuda())
     model2 = torch.nn.DataParallel(single_model2.cuda())
 
