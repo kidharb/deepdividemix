@@ -270,7 +270,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
 
     #load pretrained model for layers that match in size.
     if args.pretrained:
-        print('\n')
+        print('Loading model1 state dict\n')
         load_dict=torch.load(args.pretrained)
         own_dict=single_model1.state_dict()
         for name, param in load_dict.items():
@@ -282,7 +282,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                     .format(name, own_dict[name].size(), load_dict[name].size()))
             else:
                 own_dict[name].copy_(param)
-        print('\n')
+        print('Loading model2 state dict\n')
         load_dict=torch.load(args.pretrained)
         own_dict=single_model2.state_dict()
         for name, param in load_dict.items():
@@ -348,7 +348,8 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
 
     mva_preds,image2indx = init_mva_preds(args,train_loader)
     for epoch in range(start_epoch, args.epochs):
-        lr = adjust_learning_rate(args, optimizer, epoch)
+        lr = adjust_learning_rate(args, optimizer1, epoch)
+        lr = adjust_learning_rate(args, optimizer2, epoch)
         logger.info('Epoch: [{0}]\tlr {1:.2e}'.format(epoch, lr))
 
         if epoch < args.warm_up:
@@ -369,8 +370,8 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
             assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
             print('Warmup Net2')
             trainloss, mva_preds = train( train_loader,
-                                model1,
-                                optimizer1,
+                                model2,
+                                optimizer2,
                                 epoch,
                                 output_dir_it,
                                 args,
