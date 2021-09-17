@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-#os.environ['CUDA_VISIBLE_DEVICES'] = '3' 
+#os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 import argparse
 import json
@@ -236,22 +236,22 @@ class SegList_test(torch.utils.data.Dataset):
         assert len(self.GTlabel_list)==len(self.image_list)
         assert len(self.pseudolabel_list[0])==len(self.image_list)
 
- 
+
 def init_mva_preds(args, data_loader):
      '''
-     Inint mva_predictions for given loader-object 
-     return: 
-         mva_predictions: #Samples , initizialized with 0 
+     Inint mva_predictions for given loader-object
+     return:
+         mva_predictions: #Samples , initizialized with 0
          image2indx: function, which takes an iterable images_queries, reutrn a indices_array in torch.
-     ''' 
+     '''
      #warnings.warn('theses names migth not match properly with the data names')
      images_names = data_loader.dataset.image_list
      n_samples = len ( images_names)
      size = args.crop_size
      mva_preds = torch.zeros((n_samples, size, size))
- 
+
      image_mapping = {image_name:i for image_name, i in zip(images_names, range(n_samples))}
- 
+
      def image2indx(images_queries):
          indices = [image_mapping[name] for name in images_queries]
          indices_array = torch.LongTensor(indices)
@@ -269,14 +269,14 @@ def apply_dcrf(sal_pred, name, Color=True):
         b_np=sal_pred[ind,:,:,:].detach().cpu().numpy()
         assert b_np.dtype=='float32'
         b_np_resh=b_np.reshape((2,-1))
-        d = dcrf.DenseCRF2D(size, size, 2) 
+        d = dcrf.DenseCRF2D(size, size, 2)
         d.setUnaryEnergy(-np.log(b_np_resh))
 
         # This adds the color-independent term, features are the locations only.
         d.addPairwiseGaussian(sxy=(3, 3), compat=3, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
         # This adds the color-dependent term, i.e. features are (x,y,r,g,b).
-        
-        if Color: 
+
+        if Color:
             img=np.array(Image.open(name[ind]).resize((size,size)))
             #take care of black white images:
             if len(img.shape)==2:
@@ -434,10 +434,10 @@ def F_cont(sal_pred, Disc_Label, b=1.5):
     eps=1e-5
     prec=TP/(TP+FP+eps)
     recall=TP/(TP+TN+eps)
- 
+
     F=(1+b)*prec*recall/(b*prec+recall+eps)
     Loss=1-F
-     
+
     return torch.mean(Loss)
 
 
@@ -486,7 +486,7 @@ def create_phase2_plots(directory):
         fig.savefig(directory + 'val_mae.png', dpi=fig.dpi)
 
 
-def update_plots(refined_labels_directory, output_dir_it, pseudolabel):            
+def update_plots(refined_labels_directory, output_dir_it, pseudolabel):
     with open(output_dir_it + 'Results_plain.txt', 'r') as file_plain:
         lines_plain = file_plain.readlines()
         results_plain = [float(el) for el in lines_plain[-1].strip('\n').split('\t')]
@@ -558,6 +558,7 @@ def parse_args():
                         default='', type=str, metavar='PATH',
                         help='use pre-trained model')
     parser.add_argument('-j', '--workers', type=int, default=8)
+    parser.add_argument('-w', '--warm_up', type=int, default=5)
     parser.add_argument('--bn-sync', action='store_true')
     args = parser.parse_args()
 

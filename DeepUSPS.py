@@ -265,7 +265,6 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
         f.write("{}:\t\t{}\n".format(k, v))
     f.close()
 
-    single_model = DRNSeg(args.arch, 2, None, pretrained=True)
 
     #load pretrained model for layers that match in size.
     if args.pretrained:
@@ -283,14 +282,10 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                 own_dict[name].copy_(param)
         print('\n')
 
-
-    model = torch.nn.DataParallel(single_model).cuda()
-    #model = torch.nn.DataParallel(single_model())
-
-    #KB make a copy so we do not have to change anymore code
-    #model = single_model
-    #KB Move the model to the GPU
-    #model.cuda()
+    single_model1 = DRNSeg(args.arch, 2, None, pretrained=False)
+    single_model2 = DRNSeg(args.arch, 2, None, pretrained=False)
+    model1 = torch.nn.DataParallel(single_model1.cuda()
+    model2 = torch.nn.DataParallel(single_model2.cuda()
 
     # Data loading code
     data_dir = args.data_dir
@@ -320,7 +315,8 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
             pin_memory=True, drop_last=True
         )
 
-    optimizer = torch.optim.Adam(single_model.optim_parameters(), lr=args.lr)
+    optimizer1 = torch.optim.Adam(single_model1.optim_parameters(), lr=args.lr)
+    optimizer2 = torch.optim.Adam(single_model2.optim_parameters(), lr=args.lr)
 
     cudnn.benchmark = True
     start_epoch = 0
@@ -343,34 +339,67 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
         lr = adjust_learning_rate(args, optimizer, epoch)
         logger.info('Epoch: [{0}]\tlr {1:.2e}'.format(epoch, lr))
 
-        trainloss, mva_preds = train( train_loader,
-                            model,
-                            optimizer,
-                            epoch,
-                            output_dir_it,
-                            args,
-                            discretization_threshold,
-                            refined_labels_directory=output_dir_it,
-                            iter_size=iter_size_train,
-                            print_freq=6,
-                            TrainMapsOut=MapsOut,
-                            mva_preds=mva_preds,
-                            image2indx=image2indx)
-        assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
+        if epoch < args.warm_up:
+            print('Warmup Net1')
+            trainloss, mva_preds = train( train_loader,
+                                model1,
+                                optimizer1,
+                                epoch,
+                                output_dir_it,
+                                args,
+                                discretization_threshold,
+                                refined_labels_directory=output_dir_it,
+                                iter_size=iter_size_train,
+                                print_freq=6,
+                                TrainMapsOut=MapsOut,
+                                mva_preds=mva_preds,
+                                image2indx=image2indx)
+            assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
+            print('Warmup Net2')
+            trainloss, mva_preds = train( train_loader,
+                                model2,
+                                optimizer2,
+                                epoch,
+                                output_dir_it,
+                                args,
+                                discretization_threshold,
+                                refined_labels_directory=output_dir_it,
+                                iter_size=iter_size_train,
+                                print_freq=6,
+                                TrainMapsOut=MapsOut,
+                                mva_preds=mva_preds,
+                                image2indx=image2indx)
+            assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
 
-        if not MapsOut:
-            # evaluate on validation set
-            F_beta, GT_loss_L1 = validate(val_loader, model, epoch, output_dir_it, args, print_freq=6)
+        else:
+            trainloss, mva_preds = train( train_loader,
+                                model,
+                                optimizer,
+                                epoch,
+                                output_dir_it,
+                                args,
+                                discretization_threshold,
+                                refined_labels_directory=output_dir_it,
+                                iter_size=iter_size_train,
+                                print_freq=6,
+                                TrainMapsOut=MapsOut,
+                                mva_preds=mva_preds,
+                                image2indx=image2indx)
+            assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
 
-        checkpoint_path_latest = output_dir_it + 'checkpoint_{:03d}.pth.tar'.format(epoch + 1)
+            if not MapsOut:
+                # evaluate on validation set
+                F_beta, GT_loss_L1 = validate(val_loader, model, epoch, output_dir_it, args, print_freq=6)
 
-        if (epoch + 1) % args.checkpoint_freq == 0 or epoch==args.epochs:
-            torch.save({
-                'epoch': epoch + 1,
-                'arch': args.arch,
-                'state_dict': model.state_dict(),
-                'optimizer' : optimizer.state_dict(),
-            }, checkpoint_path_latest)
+            checkpoint_path_latest = output_dir_it + 'checkpoint_{:03d}.pth.tar'.format(epoch + 1)
+
+            if (epoch + 1) % args.checkpoint_freq == 0 or epoch==args.epochs:
+                torch.save({
+                    'epoch': epoch + 1,
+                    'arch': args.arch,
+                    'state_dict': model.state_dict(),
+                    'optimizer' : optimizer.state_dict(),
+                }, checkpoint_path_latest)
 
     return trainloss
 
