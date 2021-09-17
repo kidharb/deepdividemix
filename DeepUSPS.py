@@ -182,7 +182,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
             batch_data.compute_loss(index, mean=False, beta=args.beta)
             loss = torch.mean(batch_data.loss)
 
-            for b in range(len(index):
+            for b in range(len(index)):
                  losses[index[b]]=batch_data.loss[b]
             #====================================================================================================================
             #       Update Documentation
