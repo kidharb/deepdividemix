@@ -106,9 +106,9 @@ class BatchData():
             self.pseudolabels_var[dummy_ind]=Discretize(self.pseudolabels_var[dummy_ind], Disc_Thr).float()
 
     #Compute
-    def compute_loss(self, index, beta=1.0):
+    def compute_loss(self, index, mean=True, beta=1.0):
         self.loss=0.0
         for dummy_ind in range(len(self.sal_pred_list)):
-            self.loss+=F_cont(self.sal_pred_list[dummy_ind], self.pseudolabels_var[dummy_ind], b=beta)
+            self.loss+=F_cont(self.sal_pred_list[dummy_ind], self.pseudolabels_var[dummy_ind], mean, b=beta)
         self.loss/=len(self.sal_pred_list)
         self.all_loss[index]=self.loss

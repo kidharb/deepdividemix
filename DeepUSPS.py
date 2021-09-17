@@ -134,7 +134,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
 
     ds_length = len(train_loader.dataset)
     with torch.no_grad():
-        for i, Data in tqdm(enumerate(train_loader)):
+        for i, (index, Data) in tqdm(enumerate(train_loader)):
             #====================================================================================================================
             #       Get time, Image Names, Check Sizes
             #       Normalize Labels, create variables and put them on cuda
@@ -178,7 +178,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
             #       Compute Loss, Gradient and perform optimizer Step.
             #====================================================================================================================
             #compute the loss (with asymmetries and all) and save to batch_active.loss
-            batch_data.compute_loss(i, beta=args.beta)
+            batch_data.compute_loss(index, mean=False, beta=args.beta)
             loss = batch_data.loss
 
             #====================================================================================================================
@@ -268,7 +268,7 @@ def train(train_loader, model, optimizer, epoch, doc_directory, args, discretiza
     pseudo_targets =  torch.zeros((mva_preds.shape))
     ds_length = len(train_loader.dataset)
 
-    for i, Data in tqdm(enumerate(train_loader)):
+    for i, (index, Data) in tqdm(enumerate(train_loader)):
         #====================================================================================================================
         #       Get time, Image Names, Check Sizes
         #       Normalize Labels, create variables and put them on cuda
@@ -312,7 +312,7 @@ def train(train_loader, model, optimizer, epoch, doc_directory, args, discretiza
         #       Compute Loss, Gradient and perform optimizer Step.
         #====================================================================================================================
         #compute the loss (with asymmetries and all) and save to batch_active.loss
-        batch_data.compute_loss(i, beta=args.beta)
+        batch_data.compute_loss(index, beta=args.beta)
         loss = batch_data.loss
 
         #pass iter_size batches before updating grad
