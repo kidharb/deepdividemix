@@ -217,8 +217,8 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
     all_losses = all_losses.reshape(-1,1)
     # fit a two-component GMM to the loss
     gmm = GaussianMixture(n_components=2,max_iter=10,tol=1e-2,reg_covar=5e-4)
-    gmm.fit(losses)
-    prob = gmm.predict_proba(losses)
+    gmm.fit(all_losses)
+    prob = gmm.predict_proba(all_losses)
     prob = prob[:,gmm.means_.argmin()]
 
     if TrainMapsOut:
