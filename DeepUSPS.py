@@ -284,8 +284,8 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
 
     single_model1 = DRNSeg(args.arch, 2, None, pretrained=False)
     single_model2 = DRNSeg(args.arch, 2, None, pretrained=False)
-    model1 = torch.nn.DataParallel(single_model1.cuda()
-    model2 = torch.nn.DataParallel(single_model2.cuda()
+    model1 = torch.nn.DataParallel(single_model1.cuda())
+    model2 = torch.nn.DataParallel(single_model2.cuda())
 
     # Data loading code
     data_dir = args.data_dir
@@ -357,8 +357,8 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
             assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
             print('Warmup Net2')
             trainloss, mva_preds = train( train_loader,
-                                model2,
-                                optimizer2,
+                                model1,
+                                optimizer1,
                                 epoch,
                                 output_dir_it,
                                 args,
