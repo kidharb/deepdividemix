@@ -133,7 +133,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
     gt_targets =  torch.zeros((mva_preds.shape))
     pseudo_targets =  torch.zeros((mva_preds.shape))
 
-    ds_length = len(train_loader.dataset)
+    all_losses= torch.zeros(len(train_loader.dataset))
     with torch.no_grad():
         for i, (index, Data) in tqdm(enumerate(train_loader)):
             #====================================================================================================================
@@ -276,7 +276,6 @@ def train(train_loader, model, optimizer, epoch, doc_directory, args, discretiza
     raw_preds  = torch.zeros((output_shape[0],2,output_shape[1],output_shape[2]))
     gt_targets =  torch.zeros((mva_preds.shape))
     pseudo_targets =  torch.zeros((mva_preds.shape))
-    ds_length = len(train_loader.dataset)
 
     for i, (index, Data) in tqdm(enumerate(train_loader)):
         #====================================================================================================================
