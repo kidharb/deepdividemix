@@ -180,7 +180,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
             #====================================================================================================================
             #compute the loss (with asymmetries and all) and save to batch_active.loss
             batch_data.compute_loss(index, mean=False, beta=args.beta)
-            loss = batch_data.loss
+            loss = torch.mean(batch_data.loss)
 
             #====================================================================================================================
             #       Update Documentation
