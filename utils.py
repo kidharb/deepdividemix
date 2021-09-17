@@ -416,7 +416,7 @@ def ThresholdPrediction(pred, target, Disc_Thr):
     Z=a1*(pred>target).int()*t_up + a0*(pred<target).int()*t_low-1
     return (Z==-1).float()*pred + Z.float().clamp(0,1)
 
-def F_cont(sal_pred, Disc_Label, mean=True, b=1.5):
+def F_cont(sal_pred, Disc_Label, mean_loss=True, b=1.5):
     assert sal_pred.shape==Disc_Label.shape
     #Get True Positives, False Positives, True Negatives (Continuous!)
     TP=sal_pred*Disc_Label
@@ -438,7 +438,7 @@ def F_cont(sal_pred, Disc_Label, mean=True, b=1.5):
     F=(1+b)*prec*recall/(b*prec+recall+eps)
     Loss=1-F
 
-    if mean:
+    if mean_loss:
         return torch.mean(Loss)
     else:
         return Loss
