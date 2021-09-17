@@ -534,7 +534,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
 
             print('Eval Train Net2')
             F_beta, GT_loss_L1 = eval_train( train_loader,
-                                model1,
+                                model2,
                                 epoch,
                                 output_dir_it,
                                 args,
