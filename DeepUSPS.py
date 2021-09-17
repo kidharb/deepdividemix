@@ -26,6 +26,7 @@ from Par_CRF import apply_dcrf
 from Par_CRF import save_compute_crf
 from DataClass import *
 
+from sklearn.mixture import GaussianMixture
 
 torch.manual_seed(0)
 
@@ -210,6 +211,13 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
                                      loss_L1_GT=DOC.L1_GT,
                                      ))
 
+    all_loss=batch_data.all_loss
+    # fit a two-component GMM to the loss
+    gmm = GaussianMixture(n_components=2,max_iter=10,tol=1e-2,reg_covar=5e-4)
+    gmm.fit(all_loss)
+    prob = gmm.predict_proba(all_loss)
+    prob = prob[:,gmm.means_.argmin()]
+    #input_loss = losses.reshape(-1,1)
 
     if TrainMapsOut:
         assert refined_labels_directory is not None, 'Directory for output of refined Maps needs to be specified'
@@ -238,9 +246,9 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
         DOC_MVA.write_history(refined_labels_directory + "Results_MVA.txt")
 
     else:
-        DOC.write_history(doc_directory + "loss_train.txt")
+        DOC.write_history(doc_directory + "loss_eval_train.txt")
 
-    return losses.avg, mva_preds
+    return prob
 
 
 def train(train_loader, model, optimizer, epoch, doc_directory, args, discretization_threshold, refined_labels_directory=None, iter_size=5,
