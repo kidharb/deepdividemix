@@ -183,7 +183,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
             loss = torch.mean(batch_data.loss)
 
             for b in range(len(index)):
-                 losses[index[b]]=batch_data.loss[b]
+                 all_losses[index[b]]=batch_data.loss[b]
             #====================================================================================================================
             #       Update Documentation
             #====================================================================================================================
@@ -213,8 +213,8 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
                                      loss_L1_GT=DOC.L1_GT,
                                      ))
 
-    losses = (losses-losses.min())/(losses.max()-losses.min())
-    losses = losses.reshape(-1,1)
+    all_losses = (all_losses-all_losses.min())/(all_losses.max()-all_losses.min())
+    all_losses = all_losses.reshape(-1,1)
     # fit a two-component GMM to the loss
     gmm = GaussianMixture(n_components=2,max_iter=10,tol=1e-2,reg_covar=5e-4)
     gmm.fit(losses)
