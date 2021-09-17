@@ -179,7 +179,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
             #       Compute Loss, Gradient and perform optimizer Step.
             #====================================================================================================================
             #compute the loss (with asymmetries and all) and save to batch_active.loss
-            batch_data.compute_loss(index, mean_loss=False, beta=args.beta)
+            batch_data.compute_loss(mean_loss=False, beta=args.beta)
             loss = torch.mean(batch_data.loss)
 
             for b in range(len(index)):
