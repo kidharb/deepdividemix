@@ -558,7 +558,7 @@ def parse_args():
                         default='', type=str, metavar='PATH',
                         help='use pre-trained model')
     parser.add_argument('-j', '--workers', type=int, default=8)
-    parser.add_argument('-w', '--warm_up', type=int, default=5)
+    parser.add_argument('-w', '--warm_up', type=int, default=1)
     parser.add_argument('--bn-sync', action='store_true')
     args = parser.parse_args()
 

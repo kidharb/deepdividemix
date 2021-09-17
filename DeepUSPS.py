@@ -108,6 +108,137 @@ def validate(val_loader, model, epoch, doc_directory, args, print_freq=10):
 
         return DOC.F_GT.avg, DOC.L1_GT.avg
 
+def eval_train(train_loader, model, epoch, doc_directory, args, discretization_threshold, refined_labels_directory=None, iter_size=5,
+           print_freq=10, TrainMapsOut=False,mva_preds=None,image2indx=None):
+
+    batch_time = AverageMeter()
+    data_time = AverageMeter()
+    losses = AverageMeter()
+
+    DOC=Trackometer(epoch)
+    if TrainMapsOut:
+        DOC_plain = Trackometer(epoch)
+        DOC_CRF = Trackometer(epoch)
+        DOC_MVA = Trackometer(epoch)
+
+    Disc_Thr = discretization_threshold
+
+    # switch to train mode
+    model.eval()
+    end = time.time()
+
+    output_shape = mva_preds.shape
+    raw_preds  = torch.zeros((output_shape[0],2,output_shape[1],output_shape[2]))
+    gt_targets =  torch.zeros((mva_preds.shape))
+    pseudo_targets =  torch.zeros((mva_preds.shape))
+
+    for i, Data in tqdm(enumerate(train_loader)):
+        #====================================================================================================================
+        #       Get time, Image Names, Check Sizes
+        #       Normalize Labels, create variables and put them on cuda
+        #====================================================================================================================
+        # measure data loading time
+        data_time.update(time.time() - end)
+        #initialize batch data
+        batch_data=BatchData(Data, active=True)
+        #check dimensions of labels
+        batch_data.check_dimension()
+        #Make GT label and pseudolabels float and normalize to range [0,1]
+        batch_data.normalize_labels()
+        #Push input to cuda. Create Variables for input and labels.
+        #batch_data.create_vars_on_cuda()
+        batch_data.create_vars_on_cuda()
+
+        #====================================================================================================================
+        #       Compute Output, normalize it. Optionally apply DCRF
+        #====================================================================================================================
+        #compute saliency prediction, normalize with softmax. Optionally apply Threshold.
+        batch_data.compute_saliency(model, False)
+
+        #====================================================================================================================
+        #       If TrainMapsOut: Save Training Images (Before Optimizer Step!)
+        #====================================================================================================================
+        if TrainMapsOut:
+            m = torch.nn.Softmax(dim=1)
+            sal_pred_raw = m(batch_data.output)
+            gt_targets[image2indx(batch_data.names)] = batch_data.GT_label
+            pseudo_targets[image2indx(batch_data.names)] = batch_data.pseudolabels[0]
+            assert len(batch_data.pseudolabels) == 1, 'Only one map should be refined at a time in order to not lose information'
+            raw_preds[image2indx(batch_data.names)] = sal_pred_raw.detach().cpu()
+
+        #====================================================================================================================
+        #       Discretize Targets and apply 'soft thresholding' to saliency predictions.
+        #====================================================================================================================
+        #Discretize all pseudolabels and apply soft thresholing
+        batch_data.discretize_pseudolabels(Disc_Thr)
+
+        #=====================================================================================================================
+        #       Compute Loss, Gradient and perform optimizer Step.
+        #====================================================================================================================
+        #compute the loss (with asymmetries and all) and save to batch_active.loss
+        batch_data.compute_loss(beta=args.beta)
+        loss = batch_data.loss
+
+        #====================================================================================================================
+        #       Update Documentation
+        #====================================================================================================================
+        DOC.update(batch_data.sal_pred, batch_data.GT_label_var, batch_data.sal_pred_list, batch_data.pseudolabels_var)
+        #losses is redundant with loss DOC.Loss. Kept for convenience.
+        losses.update(loss.data.item(), batch_data.input.size(0))
+
+        # measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
+
+        FreqPrint=len(train_loader)//print_freq
+        if FreqPrint<1:
+            FreqPrint=1
+        if i % (FreqPrint) == 0:
+            logger.info('Epoch: [{0}][{1}/{2}]\t'
+                         'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                         'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                         'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                         'L1 Loss GT {loss_L1_GT.val:.4f} ({loss_L1_GT.avg:.4f})\t'
+                         .format(epoch,
+                                 i,
+                                 len(train_loader),
+                                 batch_time=batch_time,
+                                 data_time=data_time,
+                                 loss=losses,
+                                 loss_L1_GT=DOC.L1_GT,
+                                 ))
+
+
+    if TrainMapsOut:
+        assert refined_labels_directory is not None, 'Directory for output of refined Maps needs to be specified'
+        #Create Output Directories
+        path_train = refined_labels_directory
+        path_plain = join(path_train, 'PlainMaps/')
+        path_CRF = join(path_train, 'CRFMaps/')
+        path_MVA = join(path_train, 'MVAMaps/')
+        for path in  [path_train,path_plain,path_CRF,path_MVA]:
+            os.makedirs(path,exist_ok=True)
+        name = train_loader.dataset.image_list # the order is kept correctly, 0...2499
+
+        save_compute_crf(path_plain, path_CRF, path_MVA,
+                           name, gt_targets, pseudo_targets, raw_preds, mva_preds,
+                           image2indx,
+                           DOC_plain, DOC_CRF, DOC_MVA,
+                           args)
+
+        assert mva_preds.sum()!=0, 'mva_preds was not updated!?'
+
+        logger.info('\n\n\nTraining Maps Extracted in this epoch {}. Results:\n\nPlain:{}\nCRF:{}\nMVA:{}'\
+            .format(epoch, str(DOC_plain), str(DOC_CRF), str(DOC_MVA)))
+
+        DOC_plain.write_history(refined_labels_directory + "Results_plain.txt")
+        DOC_CRF.write_history(refined_labels_directory + "Results_CRF.txt")
+        DOC_MVA.write_history(refined_labels_directory + "Results_MVA.txt")
+
+    else:
+        DOC.write_history(doc_directory + "loss_train.txt")
+
+    return losses.avg, mva_preds
 
 
 def train(train_loader, model, optimizer, epoch, doc_directory, args, discretization_threshold, refined_labels_directory=None, iter_size=5,
@@ -363,7 +494,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                                 discretization_threshold,
                                 refined_labels_directory=output_dir_it,
                                 iter_size=iter_size_train,
-                                print_freq=6,
+                                print_freq=2,
                                 TrainMapsOut=MapsOut,
                                 mva_preds=mva_preds,
                                 image2indx=image2indx)
@@ -378,13 +509,36 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                                 discretization_threshold,
                                 refined_labels_directory=output_dir_it,
                                 iter_size=iter_size_train,
-                                print_freq=6,
+                                print_freq=2,
                                 TrainMapsOut=MapsOut,
                                 mva_preds=mva_preds,
                                 image2indx=image2indx)
             assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
 
         else:
+            print('Eval Train Net1')
+            F_beta, GT_loss_L1 = eval_train( train_loader,
+                                model,
+                                epoch,
+                                output_dir_it,
+                                args,
+                                discretization_threshold,
+                                refined_labels_directory=output_dir_it,
+                                iter_size=iter_size_train,
+                                print_freq=6,
+                                TrainMapsOut=MapsOut,
+                                mva_preds=mva_preds,
+                                image2indx=image2indx)
+            assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
+
+
+
+
+
+
+
+
+
             trainloss, mva_preds = train( train_loader,
                                 model,
                                 optimizer,
@@ -711,10 +865,6 @@ def train_unsupervised(args):
     train_round(args, target_dirs_refined, phase_2_directory, 0.5, MapsOut = False)
 
     create_phase2_plots(phase_2_directory)
-
-
-
-
 
 def main():
     args = parse_args()
