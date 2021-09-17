@@ -142,7 +142,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
             # measure data loading time
             data_time.update(time.time() - end)
             #initialize batch data
-            batch_data=BatchData(Data, active=True, ds_length)
+            batch_data=BatchData(Data, ds_length, active=True)
             #check dimensions of labels
             batch_data.check_dimension()
             #Make GT label and pseudolabels float and normalize to range [0,1]
@@ -178,7 +178,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
             #       Compute Loss, Gradient and perform optimizer Step.
             #====================================================================================================================
             #compute the loss (with asymmetries and all) and save to batch_active.loss
-            batch_data.compute_loss(beta=args.beta, i, dataset_length)
+            batch_data.compute_loss(beta=args.beta, i)
             loss = batch_data.loss
 
             #====================================================================================================================

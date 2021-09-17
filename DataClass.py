@@ -36,7 +36,7 @@ class BatchData():
         - image names
     This is the content of one dataloader.
     """
-    def __init__(self, batch, active=True, ds_length):
+    def __init__(self, batch, ds_length, active=True):
         assert len(batch)==4
         self.batch = batch
         self.active = active
