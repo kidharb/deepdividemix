@@ -36,11 +36,10 @@ class BatchData():
         - image names
     This is the content of one dataloader.
     """
-    def __init__(self, batch, ds_length, active=True):
+    def __init__(self, batch, active=True):
         assert len(batch)==4
         self.batch = batch
         self.active = active
-        self.all_loss = torch.zeros(ds_length)
         self.initialize()
 
     #initialize self.input, GT_label, pseudolabels, image names
@@ -107,10 +106,8 @@ class BatchData():
             self.pseudolabels_var[dummy_ind]=Discretize(self.pseudolabels_var[dummy_ind], Disc_Thr).float()
 
     #Compute
-    def compute_loss(self, index, mean=True, beta=1.0):
+    def compute_loss(self, mean=True, beta=1.0):
         self.loss=0.0
         for dummy_ind in range(len(self.sal_pred_list)):
             self.loss+=F_cont(self.sal_pred_list[dummy_ind], self.pseudolabels_var[dummy_ind], mean, b=beta)
         self.loss/=len(self.sal_pred_list)
-        if not mean:
-            self.all_loss[index]=self.loss

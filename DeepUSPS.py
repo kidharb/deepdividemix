@@ -143,7 +143,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
             # measure data loading time
             data_time.update(time.time() - end)
             #initialize batch data
-            batch_data=BatchData(Data, ds_length, active=True)
+            batch_data=BatchData(Data, active=True)
             #check dimensions of labels
             batch_data.check_dimension()
             #Make GT label and pseudolabels float and normalize to range [0,1]
@@ -182,6 +182,8 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
             batch_data.compute_loss(index, mean=False, beta=args.beta)
             loss = torch.mean(batch_data.loss)
 
+            for b in range(len(index):
+                 losses[index[b]]=batch_data.loss[b]
             #====================================================================================================================
             #       Update Documentation
             #====================================================================================================================
@@ -211,13 +213,12 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
                                      loss_L1_GT=DOC.L1_GT,
                                      ))
 
-    all_loss=batch_data.all_loss.cpu()
-    all_loss = (all_loss-all_loss.min())/(all_loss.max()-all_loss.min())
-    all_loss = all_loss.reshape(-1,1)
+    losses = (losses-losses.min())/(losses.max()-losses.min())
+    losses = losses.reshape(-1,1)
     # fit a two-component GMM to the loss
     gmm = GaussianMixture(n_components=2,max_iter=10,tol=1e-2,reg_covar=5e-4)
-    gmm.fit(all_loss)
-    prob = gmm.predict_proba(all_loss)
+    gmm.fit(losses)
+    prob = gmm.predict_proba(losses)
     prob = prob[:,gmm.means_.argmin()]
 
     if TrainMapsOut:
