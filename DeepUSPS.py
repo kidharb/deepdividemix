@@ -322,7 +322,7 @@ def train(train_loader, model, optimizer, epoch, doc_directory, args, discretiza
         #       Compute Loss, Gradient and perform optimizer Step.
         #====================================================================================================================
         #compute the loss (with asymmetries and all) and save to batch_active.loss
-        batch_data.compute_loss(index, beta=args.beta)
+        batch_data.compute_loss(beta=args.beta)
         loss = batch_data.loss
 
         #pass iter_size batches before updating grad
