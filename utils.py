@@ -181,7 +181,7 @@ class SegList(torch.utils.data.Dataset):
         #Image List: They are all in the same directory image_dir, the name is read from image names, the ending of the name is jpg
         self.image_names_short=[line.strip() for line in open(join(self.list_dir, self.phase + '_names.txt'), 'r')]
 
-        if self.phase != 'train':
+        if self.phase == 'labeled' or self.phase == 'unlabeled':
             self.image_name_short = [self.image_names_short[i] for i in self.pred_idx]
 
         self.image_list = [self.image_dir + name + '.jpg' for name in self.image_names_short]
