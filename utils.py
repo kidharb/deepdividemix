@@ -141,10 +141,8 @@ class SegList(torch.utils.data.Dataset):
 
         self.targets = targets
 
-        self.mode = mode
-
         '''
-        if self.mode = 'default':
+        if self.phase = 'train':
             self.pred_idx = [i for i in range(len(self.image_listi))]
         '''
 
