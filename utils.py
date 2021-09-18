@@ -121,8 +121,7 @@ class DRNSeg(nn.Module):
 
 
 class SegList(torch.utils.data.Dataset):
-    def __init__(self, args, data_dir, phase, transforms, image_dir=None, gt_dir=None, targets=None, list_dir=None,
-                 out_name=False):
+    def __init__(self, args, data_dir, phase, transforms, image_dir=None, gt_dir=None, targets=None, list_dir=None, out_name=False, pred=[], prob=[]):
         self.list_dir = data_dir if list_dir is None else list_dir
         self.data_dir = data_dir
         self.out_name = out_name
@@ -141,6 +140,20 @@ class SegList(torch.utils.data.Dataset):
         self.pseudolabel_list = None
 
         self.targets = targets
+
+        self.mode = mode
+
+        '''
+        if self.mode = 'default':
+            self.pred_idx = [i for i in range(len(self.image_listi))]
+        '''
+
+        if self.phase = 'labeled':
+            self.pred_idx = pred.nonzero()[0]
+            self.probability = [probability[i] for i in pred_idx]
+
+        elif self.phase = 'unlabeled':
+            self.pred_idx = (1-pred).nonzero()[0]
 
         self.read_lists()
 
@@ -169,6 +182,10 @@ class SegList(torch.utils.data.Dataset):
     def read_lists(self):
         #Image List: They are all in the same directory image_dir, the name is read from image names, the ending of the name is jpg
         self.image_names_short=[line.strip() for line in open(join(self.list_dir, self.phase + '_names.txt'), 'r')]
+
+        if self.phase != 'train':
+            self.image_name_short = [self.image_names_short[i] for i in self.pred_idx]
+
         self.image_list = [self.image_dir + name + '.jpg' for name in self.image_names_short]
         self.GTlabel_list = [self.gt_dir + name + '.png' for name in self.image_names_short]
         if self.targets is None:

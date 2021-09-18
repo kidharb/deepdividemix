@@ -253,8 +253,7 @@ def eval_train(train_loader, model, epoch, doc_directory, args, discretization_t
     return prob
 
 
-def train(train_loader, model, optimizer, epoch, doc_directory, args, discretization_threshold, refined_labels_directory=None, iter_size=5,
-           print_freq=10, TrainMapsOut=False,mva_preds=None,image2indx=None):
+def train(labeled_train_loader, unlabeled_train_loader, model1, model2, optimizer, epoch, doc_directory, args, discretization_threshold, refined_labels_directory=None, iter_size=5, print_freq=10, TrainMapsOut=False,mva_preds=None,image2indx=None):
 
     batch_time = AverageMeter()
     data_time = AverageMeter()
@@ -269,7 +268,8 @@ def train(train_loader, model, optimizer, epoch, doc_directory, args, discretiza
     Disc_Thr = discretization_threshold
 
     # switch to train mode
-    model.train()
+    model1.train()
+    model2.eval()
     end = time.time()
 
     output_shape = mva_preds.shape
@@ -277,7 +277,7 @@ def train(train_loader, model, optimizer, epoch, doc_directory, args, discretiza
     gt_targets =  torch.zeros((mva_preds.shape))
     pseudo_targets =  torch.zeros((mva_preds.shape))
 
-    for i, (index, Data) in tqdm(enumerate(train_loader)):
+    for i, (index, Data) in tqdm(enumerate(labeled_train_loader)):
         #====================================================================================================================
         #       Get time, Image Names, Check Sizes
         #       Normalize Labels, create variables and put them on cuda
@@ -298,7 +298,7 @@ def train(train_loader, model, optimizer, epoch, doc_directory, args, discretiza
         #       Compute Output, normalize it. Optionally apply DCRF
         #====================================================================================================================
         #compute saliency prediction, normalize with softmax. Optionally apply Threshold.
-        batch_data.compute_saliency(model, False)
+        batch_data.compute_saliency(model1, False)
 
         #====================================================================================================================
         #       If TrainMapsOut: Save Training Images (Before Optimizer Step!)
@@ -562,6 +562,23 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
             pred1 = (prob1 > args.p_threshold)
             pred2 = (prob2 > args.p_threshold)
 
+            labeled_train_loader = torch.utils.data.DataLoader(
+                SegList(args, data_dir, 'labeled', transforms.Compose(t),
+                image_dir= join(args.root_dir, 'Data/01_img/'), gt_dir= join(args.root_dir, 'Data/02_gt/'),
+                targets = target_dirs, list_dir=args.data_dir, out_name=True),
+                batch_size=batch_size, shuffle=True, num_workers=num_workers,
+                pin_memory=True, drop_last=True
+             )
+
+            unlabeled_train_loader = torch.utils.data.DataLoader(
+                SegList(args, data_dir, 'unlabeled', transforms.Compose(t),
+                image_dir= join(args.root_dir, 'Data/01_img/'), gt_dir= join(args.root_dir, 'Data/02_gt/'),
+                targets = target_dirs, list_dir=args.data_dir, out_name=True,
+                pred = pred1, prob = prob1),
+                batch_size=batch_size, shuffle=True, num_workers=num_workers,
+                pin_memory=True, drop_last=True
+             )
+            '''
             trainloss, mva_preds = train( train_loader,
                                 model,
                                 optimizer,
@@ -576,7 +593,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                                 mva_preds=mva_preds,
                                 image2indx=image2indx)
             assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
-
+            '''
             if not MapsOut:
                 # evaluate on validation set
                 F_beta, GT_loss_L1 = validate(val_loader, model, epoch, output_dir_it, args, print_freq=6)
