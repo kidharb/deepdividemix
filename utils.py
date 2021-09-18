@@ -148,11 +148,11 @@ class SegList(torch.utils.data.Dataset):
             self.pred_idx = [i for i in range(len(self.image_listi))]
         '''
 
-        if self.phase = 'labeled':
+        if self.phase == 'labeled':
             self.pred_idx = pred.nonzero()[0]
             self.probability = [probability[i] for i in pred_idx]
 
-        elif self.phase = 'unlabeled':
+        elif self.phase == 'unlabeled':
             self.pred_idx = (1-pred).nonzero()[0]
 
         self.read_lists()
