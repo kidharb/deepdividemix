@@ -560,7 +560,10 @@ def parse_args():
                         default='', type=str, metavar='PATH',
                         help='use pre-trained model')
     parser.add_argument('-j', '--workers', type=int, default=8)
-    parser.add_argument('-w', '--warm_up', type=int, default=1)
+    parser.add_argument('-w', '--warm_up', type=int, default=1,
+                        help='Number of epochs to warmup for')
+    parser.add_argument('-t', '--threshold', type=float, default=0.5,
+                        help='Threshold for GMM model')
     parser.add_argument('--bn-sync', action='store_true')
     args = parser.parse_args()
 
