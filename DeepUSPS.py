@@ -276,7 +276,7 @@ def warmup(train_loader, model,  optimizer, epoch, doc_directory, args, discreti
     gt_targets =  torch.zeros((mva_preds.shape))
     pseudo_targets =  torch.zeros((mva_preds.shape))
 
-    for i, (index, Data) in tqdm(enumerate(labeled_train_loader)):
+    for i, (index, Data) in tqdm(enumerate(train_loader)):
         #====================================================================================================================
         #       Get time, Image Names, Check Sizes
         #       Normalize Labels, create variables and put them on cuda
