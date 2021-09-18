@@ -559,11 +559,8 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                     image2indx=image2indx)
             assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
 
-
-
-
-
-
+            pred1 = (prob1 > args.p_threshold)
+            pred2 = (prob2 > args.p_threshold)
 
             trainloss, mva_preds = train( train_loader,
                                 model,
