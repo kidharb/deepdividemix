@@ -703,7 +703,8 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
             labeled_train_loader = torch.utils.data.DataLoader(
                 SegList(args, data_dir, 'labeled', transforms.Compose(t),
                 image_dir= join(args.root_dir, 'Data/01_img/'), gt_dir= join(args.root_dir, 'Data/02_gt/'),
-                targets = target_dirs, list_dir=args.data_dir, out_name=True),
+                targets = target_dirs, list_dir=args.data_dir, out_name=True,
+                pred = pred1, prob = prob1),
                 batch_size=batch_size, shuffle=True, num_workers=num_workers,
                 pin_memory=True, drop_last=True
              )
