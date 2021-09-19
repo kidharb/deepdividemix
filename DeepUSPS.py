@@ -481,7 +481,6 @@ def train(labeled_train_loader, unlabeled_train_loader, model1, model2, optimize
 
             targets_x = ptx / ptx.sum(dim=1, keepdim=True) # normalize
             targets_x = targets_x.detach()
-'''
 
         if TrainMapsOut:
             m = torch.nn.Softmax(dim=1)
