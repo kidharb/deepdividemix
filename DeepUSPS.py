@@ -446,8 +446,8 @@ def train(labeled_train_loader, unlabeled_train_loader, model1, model2, optimize
             batch_data_unlabeled_net1.compute_saliency(model1, False)
             batch_data_unlabeled_net2.compute_saliency(model2, False)
 
-            outputs_u1 = batch_data_unlabeled_net1.sal_pred_list
-            outputs_u2 = batch_data_unlabeled_net2.sal_pred_list
+            outputs_u1 = batch_data_unlabeled_net1.sal_pred
+            outputs_u2 = batch_data_unlabeled_net2.sal_pred
 
             pu = (outputs_u1 + outputs_u2) / 2
             ptu = pu**(1/args.T) # temparature sharpening
