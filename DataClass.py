@@ -69,6 +69,7 @@ class BatchData():
         self.input = self.input.cuda()
         self.input_var = torch.autograd.Variable(self.input).cuda()
         self.GT_label_var = torch.autograd.Variable(self.GT_label).cuda()
+        self.merged_labels = self.merged_labels.cuda()
         self.pseudolabels_var=[]
         for target in self.pseudolabels:
             self.pseudolabels_var.append(torch.autograd.Variable(target).cuda())
@@ -96,7 +97,7 @@ class BatchData():
             #self.sal_pred_list.append(torch.tensor(self.sal_pred).cuda())
             self.sal_pred_list.append(self.sal_pred)
 
-    #merge the pseudolabels
+    #merge the pseudolabels, using simple average
     def merge_pseudolabels(self, Disc_Thr):
         self.merged_labels = torch.zeros((self.pseudolabels_var[0].shape))
         for dummy_ind in range(len(self.pseudolabels_var)):
