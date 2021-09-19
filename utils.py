@@ -579,7 +579,7 @@ def parse_args():
     parser.add_argument('--pretrained', dest='pretrained',
                         default='', type=str, metavar='PATH',
                         help='use pre-trained model')
-    parser.add_argument('-j', '--workers', type=int, default=0)
+    parser.add_argument('-j', '--workers', type=int, default=4)
     parser.add_argument('-w', '--warm_up', type=int, default=1,
                         help='Number of epochs to warmup for')
     parser.add_argument('-t', '--p_threshold', type=float, default=0.5,

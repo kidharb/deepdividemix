@@ -478,8 +478,9 @@ def train(labeled_train_loader, unlabeled_train_loader, model1, model2, optimize
             labels_x = batch_data_labeled_net1.merged_labels
 
             px = (torch.softmax(outputs_x1, dim=1) + torch.softmax(outputs_x2, dim=1)) / 2
-            px = w_x*labels_x + (1-w_x)*px
-            ptx = px**(1/args.T) # temparature sharpening
+            for i in range(args.batch_size):
+                px[i] = w_x[i]*labels_x[i] + (1-w_x[i])*px[i]
+                ptx[i] = px[i]**(1/args.T) # temparature sharpening
 
             targets_x = ptx / ptx.sum(dim=1, keepdim=True) # normalize
             targets_x = targets_x.detach()
