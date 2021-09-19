@@ -100,8 +100,8 @@ class BatchData():
     #merge the pseudolabels, using simple average
     def merge_pseudolabels(self, Disc_Thr):
         for dummy_ind in range(len(self.pseudolabels_var)):
-            self.merged_labels = torch.add(self.pseudolabels_var[dummy_ind], self.merged_labels)
-        self.merged_labels = torch.div(self.merged_labels,len(self.pseudolabels_var))
+            self.merged_labels = self.pseudolabels_var[dummy_ind] + self.merged_labels
+        self.merged_labels = self.merged_labels / len(self.pseudolabels_var)
         self.merged_labels = Discretize(self.merged_labels, Disc_Thr).float()
 
     #discretize the pseudolabels with soft thresholding
