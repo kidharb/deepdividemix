@@ -425,31 +425,84 @@ def train(labeled_train_loader, unlabeled_train_loader, model1, model2, optimize
             print('Could not load unlabeled dataset')
 
         w_x = w_x.view(-1,1).type(torch.FloatTensor)
-        #====================================================================================================================
-        #       Get time, Image Names, Check Sizes
-        #       Normalize Labels, create variables and put them on cuda
-        #====================================================================================================================
-        # measure data loading time
-        data_time.update(time.time() - end)
-        #initialize batch data
-        batch_data=BatchData(Data, active=True)
-        #check dimensions of labels
-        batch_data.check_dimension()
-        #Make GT label and pseudolabels float and normalize to range [0,1]
-        batch_data.normalize_labels()
-        #Push input to cuda. Create Variables for input and labels.
-        #batch_data.create_vars_on_cuda()
-        batch_data.create_vars_on_cuda()
 
-        #====================================================================================================================
-        #       Compute Output, normalize it. Optionally apply DCRF
-        #====================================================================================================================
-        #compute saliency prediction, normalize with softmax. Optionally apply Threshold.
-        batch_data.compute_saliency(model1, False)
+        with torch.no_grad():
+            # measure data loading time
+            data_time.update(time.time() - end)
+            #initialize batch data
+            batch_data_unlabeled_net1=BatchData(Data_u, active=True)
+            batch_data_unlabeled_net2=BatchData(Data_u, active=True)
+            #check dimensions of labels
+            batch_data_unlabeled_net1.check_dimension()
+            batch_data_unlabeled_net2.check_dimension()
+            #Make GT label and pseudolabels float and normalize to range [0,1]
+            batch_data_unlabeled_net1.normalize_labels()
+            batch_data_unlabeled_net2.normalize_labels()
+            #Push input to cuda. Create Variables for input and labels.
+            #batch_data.create_vars_on_cuda()
+            batch_data_unlabeled_net1.create_vars_on_cuda()
+            batch_data_unlabeled_net2.create_vars_on_cuda()
 
-        #====================================================================================================================
-        #       If TrainMapsOut: Save Training Images (Before Optimizer Step!)
-        #====================================================================================================================
+            batch_data_unlabeled_net1.compute_saliency(model1, False)
+            batch_data_unlabeled_net2.compute_saliency(model2, False)
+
+            outputs_u1 = batch_data_unlabeled_net1.sal_pred_list
+            outputs_u2 = batch_data_unlabeled_net2.sal_pred_list
+
+            pu = (outputs_u1 + outputs_u2) / 2
+            ptu = pu**(1/args.T) # temparature sharpening
+
+            targets_u = ptu / ptu.sum(dim=1, keepdim=True) # normalize
+            targets_u = targets_u.detach()
+
+            #initialize batch data
+            batch_data_labeled_net1=BatchData(Data_x, active=True)
+            batch_data_labeled_net2=BatchData(Data_x, active=True)
+            #check dimensions of labels
+            batch_data_labeled_net1.check_dimension()
+            batch_data_labeled_net2.check_dimension()
+            #Make GT label and pseudolabels float and normalize to range [0,1]
+            batch_data_labeled_net1.normalize_labels()
+            batch_data_labeled_net2.normalize_labels()
+            #Push input to cuda. Create Variables for input and labels.
+            #batch_data.create_vars_on_cuda()
+            batch_data_labeled_net1.create_vars_on_cuda()
+            batch_data_labeled_net2.create_vars_on_cuda()
+
+            batch_data_labeled_net1.compute_saliency(model1, False)
+            batch_data_labeled_net2.compute_saliency(model2, False)
+
+            outputs_x1 = batch_data_labeled_net1.sal_pred_list
+            outputs_x2 = batch_data_labeled_net2.sal_pred_list
+
+
+            '''
+            labels_x = [None] * args.batch_size
+            ptx = [None] * args.batch_size
+            targets_x = [None] * args.batch_size
+            for batch in range(args.batch_size):
+                sum_labels_x = torch.zeros((args.image_size))
+                for pseudolabel in range(len(pseudolabels)):
+                    sum_labels_x = torch.add(pseudolabels[pseudolabel][batch],sum_labels_x)
+                labels_x[batch] = torch.div(sum_labels_x,len(pseudolabels))
+                labels_x[batch] = (labels_x[batch] > 0.5).float()
+
+            for batch in range(batch_size):
+                px[batch] = w_x[batch]*labels_x[batch].cuda() + (1-w_x[batch])*px[batch]
+                ptx[batch] = px[batch]**(1/args.T) # temparature sharpening
+                targets_x[batch] = ptx[batch] / ptx[0].sum(dim=1,keepdim=True) # normalize
+                targets_x[batch] = targets_x[batch].detach()
+
+            labelx =
+
+            px = (torch.softmax(outputs_x1, dim=1) + torch.softmax(outputs_x2, dim=1)) / 2
+            px = w_x*batch_data_labeled_net1.pseudolabels_var + (1-w_x)*px
+            ptx = px**(1/args.T) # temparature sharpening
+
+            targets_x = ptx / ptx.sum(dim=1, keepdim=True) # normalize
+            targets_x = targets_x.detach()
+'''
+
         if TrainMapsOut:
             m = torch.nn.Softmax(dim=1)
             sal_pred_raw = m(batch_data.output)

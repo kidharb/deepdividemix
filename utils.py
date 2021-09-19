@@ -583,7 +583,8 @@ def parse_args():
     parser.add_argument('-w', '--warm_up', type=int, default=1,
                         help='Number of epochs to warmup for')
     parser.add_argument('-t', '--p_threshold', type=float, default=0.5,
-                        help='Threshold for GMM model')
+    parser.add_argument('-T', type=float, default=0.5,
+                        help='Sharpening Temperature')
     parser.add_argument('--bn-sync', action='store_true')
     args = parser.parse_args()
 
