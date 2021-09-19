@@ -98,7 +98,7 @@ class BatchData():
 
     #merge the pseudolabels
     def merge_pseudolabels(self, Disc_Thr):
-        self.merged_labels = torch.zeros((pseudolabels_var[0].shape))
+        self.merged_labels = torch.zeros((self.pseudolabels_var[0].shape))
         for dummy_ind in range(len(self.pseudolabels_var)):
             self.merged_labels = torch.add(self.pseudolabels_var[dummy_ind], self.merged_labels)
         self.merged_labels = torch.div(self.merged_labels,len(self.pseudolabels_var))
