@@ -50,6 +50,7 @@ class BatchData():
         self.names = self.batch[3]
         self.imnames = [(path.split('/')[-1])[:-4] + '.png' for path in self.names]
         self.size = self.GT_label.shape[2]
+        self.merged_labels = None
 
     #check if GT labels and pseudolabels have the same dimensions
     def check_dimension(self):
