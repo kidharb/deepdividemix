@@ -731,7 +731,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                                 unlabeled_train_loader,
                                 model1,
                                 model2,
-                                optimizer,
+                                optimizer1,
                                 epoch,
                                 output_dir_it,
                                 args,
