@@ -172,7 +172,10 @@ class SegList(torch.utils.data.Dataset):
             data.append(self.image_list[index])
         assert len(data)==4
 
-        return index, tuple(data)
+        if (self.phase == 'labeled'):
+            return index, tuple(data), self.probability[index]
+        else:
+            return index, tuple(data)
 
     def __len__(self):
         return len(self.image_list)
