@@ -633,7 +633,8 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
         lr = adjust_learning_rate(args, optimizer2, epoch)
         logger.info('Epoch: [{0}]\tlr {1:.2e}'.format(epoch, lr))
 
-        if epoch < args.warm_up:
+        #if epoch < args.warm_up:
+        if 0:
             print('Warmup Net1')
             trainloss, mva_preds = warmup( train_loader,
                                 model1,

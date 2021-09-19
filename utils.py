@@ -148,7 +148,6 @@ class SegList(torch.utils.data.Dataset):
 
         if self.phase == 'labeled':
             self.pred_idx = pred.nonzero()[0]
-            self.probability = [prob[i] for i in self.pred_idx]
 
         elif self.phase == 'unlabeled':
             self.pred_idx = (1-pred).nonzero()[0]
@@ -181,8 +180,10 @@ class SegList(torch.utils.data.Dataset):
         #Image List: They are all in the same directory image_dir, the name is read from image names, the ending of the name is jpg
         self.image_names_short=[line.strip() for line in open(join(self.list_dir, self.phase + '_names.txt'), 'r')]
 
-        if self.phase == 'labeled' or self.phase == 'unlabeled':
-            self.image_name_short = [self.image_names_short[i] for i in self.pred_idx]
+        filtered_names = None
+        if (self.phase == 'labeled') or (self.phase == 'unlabeled'):
+            filtered_names = [self.image_names_short[i] for i in self.pred_idx]
+            self.image_name_short = filtered_names
 
         self.image_list = [self.image_dir + name + '.jpg' for name in self.image_names_short]
         self.GTlabel_list = [self.gt_dir + name + '.png' for name in self.image_names_short]
