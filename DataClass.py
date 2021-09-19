@@ -95,6 +95,14 @@ class BatchData():
             #self.sal_pred_list.append(torch.tensor(self.sal_pred).cuda())
             self.sal_pred_list.append(self.sal_pred)
 
+    #merge the pseudolabels
+    def merge_pseudolabels(self, Disc_Thr):
+        self.merged_labels = torch.zeros((pseudolabels_var[0].shape))
+        for dummy_ind in range(len(self.pseudolabels_var)):
+            self.merged_labels = torch.add(self.pseudolabels_var[dummy_ind], self.merged_labels)
+        self.merged_labels = torch.div(self.merged_labels,len(self.pseudolabels_var))
+        self.merged_labels = Discretize(self.merged_labels, Disc_Thr).float()
+
     #discretize the pseudolabels with soft thresholding
     def discretize_pseudolabels(self, Disc_Thr):
         #Apply soft threshold

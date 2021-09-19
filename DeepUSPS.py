@@ -472,28 +472,8 @@ def train(labeled_train_loader, unlabeled_train_loader, model1, model2, optimize
             batch_data_labeled_net1.compute_saliency(model1, False)
             batch_data_labeled_net2.compute_saliency(model2, False)
 
-            outputs_x1 = batch_data_labeled_net1.sal_pred_list
-            outputs_x2 = batch_data_labeled_net2.sal_pred_list
-
-
-            '''
-            labels_x = [None] * args.batch_size
-            ptx = [None] * args.batch_size
-            targets_x = [None] * args.batch_size
-            for batch in range(args.batch_size):
-                sum_labels_x = torch.zeros((args.image_size))
-                for pseudolabel in range(len(pseudolabels)):
-                    sum_labels_x = torch.add(pseudolabels[pseudolabel][batch],sum_labels_x)
-                labels_x[batch] = torch.div(sum_labels_x,len(pseudolabels))
-                labels_x[batch] = (labels_x[batch] > 0.5).float()
-
-            for batch in range(batch_size):
-                px[batch] = w_x[batch]*labels_x[batch].cuda() + (1-w_x[batch])*px[batch]
-                ptx[batch] = px[batch]**(1/args.T) # temparature sharpening
-                targets_x[batch] = ptx[batch] / ptx[0].sum(dim=1,keepdim=True) # normalize
-                targets_x[batch] = targets_x[batch].detach()
-
-            labelx =
+            outputs_x1 = batch_data_labeled_net1.sal_pred
+            outputs_x2 = batch_data_labeled_net2.sal_pred
 
             px = (torch.softmax(outputs_x1, dim=1) + torch.softmax(outputs_x2, dim=1)) / 2
             px = w_x*batch_data_labeled_net1.pseudolabels_var + (1-w_x)*px
