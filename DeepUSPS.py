@@ -474,6 +474,7 @@ def train(labeled_train_loader, unlabeled_train_loader, model1, model2, optimize
 
             outputs_x1 = batch_data_labeled_net1.sal_pred
             outputs_x2 = batch_data_labeled_net2.sal_pred
+            labels_x = batch_data_labeled_net1.merge_pseudolabels(Disc_Thr)
 
             px = (torch.softmax(outputs_x1, dim=1) + torch.softmax(outputs_x2, dim=1)) / 2
             px = w_x*batch_data_labeled_net1.merged_labels + (1-w_x)*px
