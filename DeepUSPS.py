@@ -479,7 +479,7 @@ def train(labeled_train_loader, unlabeled_train_loader, model1, model2, optimize
 
             px = (torch.softmax(outputs_x1, dim=1) + torch.softmax(outputs_x2, dim=1)) / 2
             ptx = [None] * args.batch_size
-            targets[x] = [None] * args.batch_size
+            targets = [None] * args.batch_size
             for i in range(args.batch_size):
                 px[i] = w_x[i]*labels_x[i] + (1-w_x[i])*px[i]
                 ptx[i] = px[i]**(1/args.T) # temparature sharpening
