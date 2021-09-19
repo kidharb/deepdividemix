@@ -50,7 +50,7 @@ class BatchData():
         self.names = self.batch[3]
         self.imnames = [(path.split('/')[-1])[:-4] + '.png' for path in self.names]
         self.size = self.GT_label.shape[2]
-        self.merged_labels = torch.zeros((self.size))
+        self.merged_labels = torch.zeros((self.size,self.size))
 
     #check if GT labels and pseudolabels have the same dimensions
     def check_dimension(self):
@@ -99,7 +99,6 @@ class BatchData():
 
     #merge the pseudolabels, using simple average
     def merge_pseudolabels(self, Disc_Thr):
-        self.merged_labels = torch.zeros((self.pseudolabels_var[0].shape))
         for dummy_ind in range(len(self.pseudolabels_var)):
             self.merged_labels = torch.add(self.pseudolabels_var[dummy_ind], self.merged_labels)
         self.merged_labels = torch.div(self.merged_labels,len(self.pseudolabels_var))
