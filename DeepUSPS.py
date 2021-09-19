@@ -410,12 +410,21 @@ def train(labeled_train_loader, unlabeled_train_loader, model1, model2, optimize
     model2.eval()
     end = time.time()
 
+    unlabeled_train_iter = iter(unlabeled_train_loader)
+    num_iter = (len(labeled_train_loader.dataset)//args.batch_size)+1
+
     output_shape = mva_preds.shape
     raw_preds  = torch.zeros((output_shape[0],2,output_shape[1],output_shape[2]))
     gt_targets =  torch.zeros((mva_preds.shape))
     pseudo_targets =  torch.zeros((mva_preds.shape))
 
-    for i, (index, Data) in tqdm(enumerate(labeled_train_loader)):
+    for i, (index_x, Data_x, w_x) in tqdm(enumerate(labeled_train_loader)):
+        try:
+            index_u, Data_u = unlabeled_train_iter.next()
+        except:
+            print('Could not load unlabeled dataset')
+
+        w_x = w_x.view(-1,1).type(torch.FloatTensor)
         #====================================================================================================================
         #       Get time, Image Names, Check Sizes
         #       Normalize Labels, create variables and put them on cuda
@@ -633,8 +642,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
         lr = adjust_learning_rate(args, optimizer2, epoch)
         logger.info('Epoch: [{0}]\tlr {1:.2e}'.format(epoch, lr))
 
-        #if epoch < args.warm_up:
-        if 0:
+        if epoch < args.warm_up:
             print('Warmup Net1')
             trainloss, mva_preds = warmup( train_loader,
                                 model1,
@@ -718,9 +726,10 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                 batch_size=batch_size, shuffle=True, num_workers=num_workers,
                 pin_memory=True, drop_last=True
              )
-            '''
-            trainloss, mva_preds = train( train_loader,
-                                model,
+            trainloss, mva_preds = train(labeled_train_loader,
+                                unlabeled_train_loader,
+                                model1,
+                                model2,
                                 optimizer,
                                 epoch,
                                 output_dir_it,
@@ -733,7 +742,7 @@ def train_round(args, target_dirs, output_dir_it, discretization_threshold, Maps
                                 mva_preds=mva_preds,
                                 image2indx=image2indx)
             assert torch.isnan(mva_preds.sum(dim=(1,2))).sum().item() == 0, 'images are droped since size of data set is not a multiple of batch size'
-            '''
+
             if not MapsOut:
                 # evaluate on validation set
                 F_beta, GT_loss_L1 = validate(val_loader, model, epoch, output_dir_it, args, print_freq=6)
