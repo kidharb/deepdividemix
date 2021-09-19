@@ -424,7 +424,7 @@ def train(labeled_train_loader, unlabeled_train_loader, model1, model2, optimize
         except:
             print('Could not load unlabeled dataset')
 
-        w_x = w_x.view(-1,1).type(torch.FloatTensor)
+        w_x = w_x.view(-1,1).type(torch.FloatTensor).cuda()
 
         with torch.no_grad():
             # measure data loading time
