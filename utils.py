@@ -188,6 +188,7 @@ class SegList(torch.utils.data.Dataset):
         if (self.phase == 'labeled') or (self.phase == 'unlabeled'):
             filtered_names = [self.image_names_short[i] for i in self.pred_idx]
             self.image_names_short = filtered_names
+            logger.info('{0} dataset size is {1}'.format(self.phase,len(filtered_names)))
 
         self.image_list = [self.image_dir + name + '.jpg' for name in self.image_names_short]
         self.GTlabel_list = [self.gt_dir + name + '.png' for name in self.image_names_short]
