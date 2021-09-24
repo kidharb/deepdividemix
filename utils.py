@@ -141,11 +141,6 @@ class SegList(torch.utils.data.Dataset):
 
         self.targets = targets
 
-        '''
-        if self.phase = 'train':
-            self.pred_idx = [i for i in range(len(self.image_listi))]
-        '''
-
         if self.phase == 'labeled':
             self.pred_idx = pred.nonzero()[0]
             self.probability = [prob[i] for i in self.pred_idx]
@@ -174,8 +169,8 @@ class SegList(torch.utils.data.Dataset):
 
         if (self.phase == 'labeled'):
             return index, tuple(data), self.probability[index]
-        else:
-            return index, tuple(data)
+
+        return index, tuple(data)
 
     def __len__(self):
         return len(self.image_list)
