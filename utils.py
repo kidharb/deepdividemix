@@ -170,6 +170,9 @@ class SegList(torch.utils.data.Dataset):
         if (self.phase == 'labeled'):
             return index, tuple(data), self.probability[index]
 
+        if (self.phase == 'val'):
+            return tuple(data)
+
         return index, tuple(data)
 
     def __len__(self):
