@@ -91,7 +91,7 @@ class BatchData():
             self.sal_pred=apply_dcrf(self.sal_pred, self.names, Color=DCRF=='Color' or DCRF=='color')
         else:
             self.sal_pred=self.sal_pred[:, 0, :, :]
-        assert self.sal_pred.shape==self.GT_label.shape
+        #assert self.sal_pred.shape==self.GT_label.shape
         self.sal_pred_list=[]
         for dummy_ind in range(len(self.pseudolabels_var)):
             #self.sal_pred_list.append(torch.tensor(self.sal_pred).cuda())
