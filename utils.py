@@ -573,7 +573,9 @@ def parse_args():
                         help='input iteration size for training, over how many batches gradient is accumulated')
     parser.add_argument('--DCRF', type=str, default=None,
                         help='If set, Dense CRF is applied in validation and test. If set to Color, it also uses rgb image for the DCRF')
-    parser.add_argument('--resume', default='', type=str, metavar='PATH',
+    parser.add_argument('--resume_model1', default='', type=str, metavar='PATH',
+                        help='path to latest checkpoint (default: none)')
+    parser.add_argument('--resume_model2', default='', type=str, metavar='PATH',
                         help='path to latest checkpoint (default: none)')
     parser.add_argument('--pretrained', dest='pretrained',
                         default='', type=str, metavar='PATH',
