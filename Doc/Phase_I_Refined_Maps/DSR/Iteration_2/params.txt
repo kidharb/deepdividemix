@@ -1,0 +1,18 @@
+Parameters:
+
+cmd:		train
+root_dir:		/notebooks/DeepUSPS
+beta:		1.0
+checkpoint_freq:		25
+crop_size:		432
+arch:		drn_d_22
+batch_size:		20
+iter_size:		1
+DCRF:		None
+resume:		
+pretrained:		/notebooks/DeepUSPS/Pretrained_Models/drn_pretraining/drn_d_22_cityscapes.pth
+workers:		2
+bn_sync:		False
+data_dir:		/notebooks/DeepUSPS/Parameters/
+epochs:		25
+lr:		2e-06
