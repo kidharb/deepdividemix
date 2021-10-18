@@ -562,7 +562,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('cmd', choices=['train', 'test', 'test_all'])
     parser.add_argument('-r', '--root-dir', default=None)
-    parser.add_argument('--beta', type=float, default=1.0,
+    parser.add_argument('--beta_sq', type=float, default=1.0,
                         help='beta_sq for continuous F-measure')
     parser.add_argument('--checkpoint_freq', type=int, default=25, help='Frequency for saving checkpoints for model')
     parser.add_argument('-s', '--crop-size', default=432, type=int)
